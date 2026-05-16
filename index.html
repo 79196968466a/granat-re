@@ -351,7 +351,7 @@
 
   <section id="videoScreen" class="screen hidden">
     <div class="video-shell">
-      <video id="forecastVideo" playsinline preload="auto" muted>
+      <video id="forecastVideo" playsinline preload="auto">
         <source src="granat.mp4" type="video/mp4" />
         Ваш браузер не поддерживает видео.
       </video>
@@ -368,6 +368,8 @@
       startScreen.classList.add('hidden');
       videoScreen.classList.remove('hidden');
       forecastVideo.currentTime = 0;
+      forecastVideo.muted = false;
+      forecastVideo.volume = 1;
 
       const playAttempt = forecastVideo.play();
       if (playAttempt !== undefined) {
