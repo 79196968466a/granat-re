@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Персональный прогноз</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fbf8f6;
+      --text: #24181d;
+      --muted: #8e7f85;
+      --card: rgba(255,255,255,0.62);
+      --line: rgba(122, 87, 100, 0.10);
+      --garnet: #8c1732;
+      --garnet-dark: #6d1026;
+      --garnet-soft: rgba(140, 23, 50, 0.08);
+      --shadow: 0 24px 80px rgba(69, 24, 35, 0.10);
+      --radius: 32px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Unbounded', system-ui, sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    .screen {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      position: relative;
+    }
+
+    .screen.hidden {
+      display: none;
+    }
+
+    .ambient {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(140, 23, 50, 0.08), transparent 22%),
+        radial-gradient(circle at 80% 18%, rgba(210, 157, 173, 0.16), transparent 24%),
+        radial-gradient(circle at 30% 85%, rgba(140, 23, 50, 0.06), transparent 24%),
+        radial-gradient(circle at 85% 80%, rgba(222, 203, 210, 0.45), transparent 26%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      position: relative;
+      min-height: min(80vh, 760px);
+      border: 1px solid var(--line);
+      border-radius: 42px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.44));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 36px;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 18px;
+      border-radius: 30px;
+      border: 1px solid rgba(140, 23, 50, 0.08);
+      pointer-events: none;
+    }
+
+    .centerpiece {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 420px);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 52px);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      font-weight: 600;
+      max-width: 12ch;
+    }
+
+    .subtext {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+      max-width: 34ch;
+      font-weight: 400;
+    }
+
+    .cta {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #9b1838 0%, #7b112b 100%);
+      color: #fff;
+      padding: 18px 34px;
+      font-family: 'Unbounded', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 18px 38px rgba(140, 23, 50, 0.28);
+      transition: transform .22s ease, box-shadow .22s ease, opacity .22s ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 46px rgba(140, 23, 50, 0.32);
+    }
+
+    .cta:active {
+      transform: translateY(0);
+    }
+
+    .prediction {
+      position: absolute;
+      z-index: 1;
+      max-width: 220px;
+      padding: 16px 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(140, 23, 50, 0.08);
+      box-shadow: 0 10px 28px rgba(71, 32, 43, 0.08);
+      backdrop-filter: blur(14px);
+      color: #6f5b64;
+      font-size: 12px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .prediction strong {
+      display: block;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .p1 { top: 8%; left: 6%; }
+    .p2 { top: 12%; right: 7%; }
+    .p3 { left: 7%; bottom: 14%; }
+    .p4 { right: 8%; bottom: 11%; }
+    .p5 { top: 44%; left: 2.5%; }
+    .p6 { top: 46%; right: 3%; }
+
+    #videoScreen {
+      background: #ffffff;
+      padding: 0;
+    }
+
+    .video-shell {
+      width: 100%;
+      min-height: 100vh;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100vw;
+      width: 100dvw;
+      height: 100vh;
+      height: 100dvh;
+      object-fit: cover;
+      background: #fff;
+      display: block;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        padding: 28px 20px 32px;
+      }
+
+      .centerpiece {
+        width: min(100%, 320px);
+        gap: 16px;
+      }
+
+      .prediction {
+        max-width: 165px;
+        font-size: 10px;
+        line-height: 1.6;
+        padding: 12px 12px;
+      }
+
+      .prediction strong {
+        font-size: 10px;
+      }
+
+      .p5, .p6 {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .screen {
+        padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      }
+
+      .hero {
+        min-height: calc(100svh - 20px);
+        border-radius: 24px;
+        padding: 20px 14px 24px;
+      }
+
+      .hero::before {
+        inset: 10px;
+        border-radius: 18px;
+      }
+
+      .centerpiece {
+        width: min(100%, 290px);
+        gap: 14px;
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+
+      h1 {
+        font-size: clamp(24px, 8vw, 34px);
+        max-width: 9ch;
+      }
+
+      .subtext {
+        max-width: 24ch;
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      .cta {
+        width: 100%;
+        max-width: 260px;
+        padding: 16px 22px;
+        font-size: 13px;
+      }
+
+      .prediction {
+        max-width: 118px;
+        padding: 9px 9px;
+        border-radius: 16px;
+        font-size: 9px;
+        line-height: 1.45;
+      }
+
+      .prediction strong {
+        font-size: 9px;
+        margin-bottom: 5px;
+      }
+
+      .p1 { top: 8%; left: 4%; }
+      .p2 { top: 8%; right: 4%; }
+      .p3 { left: 4%; bottom: 14%; }
+      .p4 { right: 4%; bottom: 14%; }
+      .p5, .p6 {
+        display: none;
+      }
+
+      .video-shell {
+        width: 100vw;
+        width: 100dvw;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section id="startScreen" class="screen">
+    <div class="ambient"></div>
+    <div class="container">
+      <div class="hero">
+        <div class="prediction p1">
+          <strong>Сигнал</strong>
+          Ваша система обнаружила редкое и очень тёплое событие.
+        </div>
+        <div class="prediction p2">
+          <strong>Прогноз</strong>
+          К концу октября привычная жизнь станет ещё счастливее.
+        </div>
+        <div class="prediction p3">
+          <strong>Совпадение?</strong>
+          Похоже, для вас уже подготовлена новая важная роль.
+        </div>
+        <div class="prediction p4">
+          <strong>Результат близко</strong>
+          Персональное предсказание готово к открытию.
+        </div>
+        <div class="prediction p5">
+          <strong>Вероятность</strong>
+          Большие перемены всё ближе, чем кажется прямо сейчас.
+        </div>
+        <div class="prediction p6">
+          <strong>Подсказка</strong>
+          Иногда самые важные новости приходят красиво и тихо.
+        </div>
+
+        <div class="centerpiece">
+          <div class="eyebrow">personal forecast</div>
+          <h1>Получить прогноз</h1>
+          <p class="subtext">Открой своё персональное послание. Иногда один клик меняет всё.</p>
+          <button id="openForecastBtn" class="cta">Получить прогноз</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="videoScreen" class="screen hidden">
+    <div class="video-shell">
+      <video id="forecastVideo" playsinline preload="auto" muted>
+        <source src="granat.mp4" type="video/mp4" />
+        Ваш браузер не поддерживает видео.
+      </video>
+    </div>
+  </section>
+
+  <script>
+    const startScreen = document.getElementById('startScreen');
+    const videoScreen = document.getElementById('videoScreen');
+    const openForecastBtn = document.getElementById('openForecastBtn');
+    const forecastVideo = document.getElementById('forecastVideo');
+
+    function openVideoScreen() {
+      startScreen.classList.add('hidden');
+      videoScreen.classList.remove('hidden');
+      forecastVideo.currentTime = 0;
+
+      const playAttempt = forecastVideo.play();
+      if (playAttempt !== undefined) {
+        playAttempt.catch(() => {
+          document.addEventListener('click', retryPlayOnce, { once: true });
+          document.addEventListener('touchstart', retryPlayOnce, { once: true });
+        });
+      }
+    }
+
+    function retryPlayOnce() {
+      forecastVideo.play().catch(() => {});
+    }
+
+    openForecastBtn.addEventListener('click', openVideoScreen);
+  </script>
+</body>
+</html>
